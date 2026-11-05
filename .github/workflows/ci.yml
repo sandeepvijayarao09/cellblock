@@ -1,0 +1,13 @@
+# Escape tests on a GitHub-hosted Ubuntu 24.04 runner (x86_64, cgroups v2).
+# The tests need root, which the runner's sudo provides.
+name: escape-tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y busybox-static
+      - run: rustup toolchain install stable --profile minimal --component clippy
+      - run: cargo clippy --release --all-targets -- -D warnings
+      - run: scripts/ci.sh
