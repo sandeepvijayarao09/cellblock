@@ -1,5 +1,7 @@
 # cellblock
 
+[![escape-tests](https://github.com/sandeepvijayarao09/cellblock/actions/workflows/ci.yml/badge.svg)](https://github.com/sandeepvijayarao09/cellblock/actions/workflows/ci.yml)
+
 A small Rust sandbox runner for untrusted (for example, model-generated) code. Phase 1 is a Linux namespace jail: seven namespaces, a read-only root with a tmpfs scratch dir, no capabilities, `no_new_privs`, cgroups v2 limits and a seccomp-bpf allowlist. When a run ends it reports which limit, if any, stopped it.
 
 > Built with [Claude Code](https://claude.com/claude-code). I can explain every syscall, seccomp rule and number in this repo, and [docs/WALKTHROUGH.md](docs/WALKTHROUGH.md) goes through them step by step.
@@ -13,7 +15,7 @@ cellblock: exit=137 signal=SIGKILL killed_by=memory.max limits_hit=memory.max oo
 
 | | |
 |---|---|
-| Escape tests | **19 tests pass** (5 times in a row, 4 threads): the 9 required attacks, 3 extra attacks, a run with seccomp off to check the other layers, and 6 tests of the limits, seccomp modes and reporting |
+| Escape tests | **19 tests pass** on aarch64 (5 times in a row, 4 threads) and in CI on x86_64: the 9 required attacks, 3 extra attacks, a run with seccomp off to check the other layers, and 6 tests of the limits, seccomp modes and reporting |
 | Cold start, launch → first user instruction | **p50 0.86 ms, p99 1.24 ms** (1,000 runs) |
 | Cold start, launch → sandbox torn down | p50 1.07 ms, p99 1.51 ms |
 | Cost of the seccomp filter | +0.29 ms p50 (0.57 ms with `--seccomp off`) |
@@ -134,7 +136,7 @@ scripts/seccomp-log.sh /bin/sh -c 'wget -q http://1.1.1.1/'   # which syscalls o
 
 `cellblock run` flags: `--memory 256M`, `--cpus 1.0`, `--pids 64`, `--scratch 64M`, `--timeout 10` (seconds), `--seccomp enforce|kill|log|off`, `--rootfs /var/lib/cellblock/rootfs`. The command after `--` is a path inside the rootfs. The exit code is the payload's (or 128 + the signal), and 125 if cellblock itself failed.
 
-`.github/workflows/ci.yml` runs the same `scripts/ci.sh` on an x86_64 Ubuntu 24.04 runner. The code type-checks for x86_64, but the workflow has not run yet because the repo is not pushed.
+`.github/workflows/ci.yml` runs clippy and the same `scripts/ci.sh` on every push, on GitHub's x86_64 Ubuntu 24.04 runner. The first run (2026-11-05) passed all 19 tests, so the suite is checked on both aarch64 (the Lima VM) and x86_64.
 
 **`/dev/kvm`:** it exists in this VM (`crw-rw---- root kvm 10, 232`), so the Firecracker backend in Phase 3 can run on the same Mac.
 
